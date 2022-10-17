@@ -1,17 +1,17 @@
 package edu.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import edu.common.BaseThreadLocal;
 import edu.common.R;
 import edu.pojo.*;
 import edu.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -84,5 +84,24 @@ public class OrderController {
         orderService.save(order);
         orderDetailService.saveBatch(orderDetails);
         return R.success("提交成功");
+    }
+    @GetMapping("/page")
+    public R<Page> page(int page,int pageSize,String number,LocalDateTime beginTime,LocalDateTime endTime){
+        Page<Orders> ordersPage = new Page<>(page, pageSize);
+        LambdaQueryWrapper<Orders> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(number!=null,Orders::getNumber,number);
+        queryWrapper.ge(beginTime!=null,Orders::getOrderTime,beginTime);
+        queryWrapper.le(beginTime!=null,Orders::getOrderTime,endTime);
+        orderService.page(ordersPage,queryWrapper);
+        return R.success(ordersPage);
+
+    }
+    @PutMapping
+    public R<String> changeStatus(@RequestBody Orders order){
+        LambdaUpdateWrapper<Orders> ordersLambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        ordersLambdaUpdateWrapper.set(Orders::getStatus,order.getStatus());
+        ordersLambdaUpdateWrapper.eq(Orders::getId,order.getId());
+        orderService.update(ordersLambdaUpdateWrapper);
+        return R.success("修改成功");
     }
 }
